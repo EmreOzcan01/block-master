@@ -216,6 +216,7 @@ class ParticleBackground {
         this.themeMinHue = null;
         this.themeMaxHue = null;
         this.isMobile = window.innerWidth < 768;
+        this.paused = false;
         this.resize();
         window.addEventListener('resize', () => {
             this.isMobile = window.innerWidth < 768;
@@ -270,7 +271,19 @@ class ParticleBackground {
         }
     }
 
+    pause() {
+        this.paused = true;
+    }
+
+    resume() {
+        if (this.paused) {
+            this.paused = false;
+            this.animate();
+        }
+    }
+
     animate() {
+        if (this.paused) return;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Render particles
@@ -371,6 +384,7 @@ class PreviewBoardAnimation {
         this.grid = Array(this.size * this.size).fill(false);
         this.cells = [];
         this.running = true;
+        this.timeouts = [];
         this.createBoard();
         this.runDemo();
     }
@@ -385,7 +399,22 @@ class PreviewBoardAnimation {
         }
     }
 
-    stop() { this.running = false; }
+    scheduleTimeout(fn, delay) {
+        if (!this.running) return;
+        const id = setTimeout(() => {
+            this.timeouts = this.timeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this.timeouts.push(id);
+    }
+
+    stop() {
+        this.running = false;
+        for (const id of this.timeouts) {
+            clearTimeout(id);
+        }
+        this.timeouts = [];
+    }
 
     placeBlock(positions, color) {
         return new Promise(resolve => {
@@ -394,18 +423,21 @@ class PreviewBoardAnimation {
                 if (pos >= 0 && pos < this.size * this.size) {
                     this.grid[pos] = true;
                     const cell = this.cells[pos];
-                    setTimeout(() => {
+                    this.scheduleTimeout(() => {
                         cell.classList.add('filled');
                         cell.style.background = color;
                         cell.style.transform = 'scale(0)';
-                        cell.offsetHeight;
-                        cell.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                        cell.style.transform = 'scale(1)';
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                cell.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                                cell.style.transform = 'scale(1)';
+                            });
+                        });
                     }, delay);
                     delay += 60;
                 }
             }
-            setTimeout(resolve, delay + 200);
+            this.scheduleTimeout(resolve, delay + 200);
         });
     }
 
@@ -432,7 +464,7 @@ class PreviewBoardAnimation {
             }
             if (toClear.size > 0) {
                 for (const pos of toClear) this.cells[pos].classList.add('clearing');
-                setTimeout(() => {
+                this.scheduleTimeout(() => {
                     for (const pos of toClear) {
                         this.grid[pos] = false;
                         this.cells[pos].classList.remove('filled', 'clearing');
@@ -458,7 +490,7 @@ class PreviewBoardAnimation {
                 cell.style.transform = '';
                 cell.style.transition = '';
             }
-            setTimeout(resolve, 300);
+            this.scheduleTimeout(resolve, 300);
         });
     }
 
@@ -477,6 +509,7 @@ class PreviewBoardAnimation {
             if (!this.running) break;
             await this.placeBlock([14, 9, 4], rc());
             await this.sleep(400);
+            if (!this.running) break;
             await this.checkAndClear();
             await this.sleep(800);
             if (!this.running) break;
@@ -488,13 +521,14 @@ class PreviewBoardAnimation {
             if (!this.running) break;
             await this.placeBlock([22, 21, 20], rc());
             await this.sleep(400);
+            if (!this.running) break;
             await this.checkAndClear();
             await this.sleep(1500);
         }
     }
 
     sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(resolve => this.scheduleTimeout(resolve, ms));
     }
 }
 
@@ -1442,6 +1476,12 @@ class BlockBlastGame {
 
     showGame() {
         this.introScreen.classList.add('fade-out');
+        if (window.previewBoardAnim) {
+            window.previewBoardAnim.stop();
+        }
+        if (window.bgParticleSystem) {
+            window.bgParticleSystem.pause();
+        }
         setTimeout(() => {
             this.introScreen.classList.add('hidden');
             this.introScreen.classList.remove('fade-out');
@@ -1454,6 +1494,13 @@ class BlockBlastGame {
         this.gameScreen.classList.add('hidden');
         this.gameOverOverlay.classList.add('hidden');
         this.introScreen.classList.remove('hidden');
+        if (window.previewBoardAnim) {
+            window.previewBoardAnim.stop();
+        }
+        window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
+        if (window.bgParticleSystem) {
+            window.bgParticleSystem.resume();
+        }
     }
 }
 
@@ -1463,11 +1510,11 @@ class BlockBlastGame {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     // Background effects
-    new ParticleBackground(document.getElementById('bgCanvas'));
+    window.bgParticleSystem = new ParticleBackground(document.getElementById('bgCanvas'));
     new FloatingBlocksManager(document.getElementById('floatingBlocks'));
 
     // Intro preview board
-    new PreviewBoardAnimation(document.getElementById('previewBoard'));
+    window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
 
     // Modal
     new ModalManager();
