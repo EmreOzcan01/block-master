@@ -1153,9 +1153,17 @@ class BlockBlastGame {
     clearPreview() {
         for (const cell of this.lastPreviewCells) {
             cell.classList.remove('preview-valid', 'preview-invalid');
-            cell.style.background = '';
-            cell.style.borderColor = '';
-            cell.style.boxShadow = '';
+            const r = parseInt(cell.dataset.row);
+            const c = parseInt(cell.dataset.col);
+            if (this.board[r][c] === null) {
+                cell.style.background = '';
+                cell.style.borderColor = '';
+                cell.style.boxShadow = '';
+            } else {
+                cell.style.background = this.board[r][c];
+                cell.style.borderColor = '';
+                cell.style.boxShadow = '';
+            }
         }
         this.lastPreviewCells = [];
 
