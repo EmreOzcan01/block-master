@@ -972,22 +972,18 @@ class BlockBlastGame {
         // Convert ghost center to an anchor (top-left) row/col on the board
         const anchorPos = this.getAnchorFromGhostCenter(ghostCenterX, ghostCenterY);
 
-        let snappedAnchorPos = null;
-        if (anchorPos) {
-            if (this.canPlace(anchorPos.row, anchorPos.col, this.dragShape)) {
-                snappedAnchorPos = anchorPos;
-            } else {
-                snappedAnchorPos = this.findNearestPlaceable(anchorPos.row, anchorPos.col, this.dragShape);
-            }
+        let validAnchorPos = null;
+        if (anchorPos && this.canPlace(anchorPos.row, anchorPos.col, this.dragShape)) {
+            validAnchorPos = anchorPos;
         }
 
-        if (snappedAnchorPos) {
-            // Only update preview if snapped anchor changed (perf optimization)
-            if (snappedAnchorPos.row !== this.lastAnchorRow || snappedAnchorPos.col !== this.lastAnchorCol) {
+        if (validAnchorPos) {
+            // Only update preview if anchor changed (perf optimization)
+            if (validAnchorPos.row !== this.lastAnchorRow || validAnchorPos.col !== this.lastAnchorCol) {
                 this.clearPreview();
-                this.showPreview(snappedAnchorPos.row, snappedAnchorPos.col);
-                this.lastAnchorRow = snappedAnchorPos.row;
-                this.lastAnchorCol = snappedAnchorPos.col;
+                this.showPreview(validAnchorPos.row, validAnchorPos.col);
+                this.lastAnchorRow = validAnchorPos.row;
+                this.lastAnchorCol = validAnchorPos.col;
             }
         } else {
             if (this.lastAnchorRow !== -1 || this.lastAnchorCol !== -1) {
@@ -998,32 +994,6 @@ class BlockBlastGame {
         }
 
         this.ticking = false;
-    }
-
-    findNearestPlaceable(row, col, shape) {
-        let bestRow = -1;
-        let bestCol = -1;
-        let minDistanceSq = Infinity;
-
-        for (let r = 0; r < BOARD_SIZE; r++) {
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                if (this.canPlace(r, c, shape)) {
-                    const dr = r - row;
-                    const dc = c - col;
-                    const distSq = dr * dr + dc * dc;
-                    if (distSq < minDistanceSq) {
-                        minDistanceSq = distSq;
-                        bestRow = r;
-                        bestCol = c;
-                    }
-                }
-            }
-        }
-
-        if (bestRow !== -1) {
-            return { row: bestRow, col: bestCol };
-        }
-        return null;
     }
 
     // Convert ghost center position to the anchor (top-left) cell on the board
