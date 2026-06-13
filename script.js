@@ -215,8 +215,12 @@ class ParticleBackground {
         this.particles = [];
         this.themeMinHue = null;
         this.themeMaxHue = null;
+        this.isMobile = window.innerWidth < 768;
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', () => {
+            this.isMobile = window.innerWidth < 768;
+            this.resize();
+        });
         this.init();
         this.animate();
     }
@@ -227,7 +231,9 @@ class ParticleBackground {
     }
 
     init() {
-        const count = Math.min(Math.floor((this.canvas.width * this.canvas.height) / 15000), 80);
+        const divider = this.isMobile ? 25000 : 15000;
+        const maxCount = this.isMobile ? 30 : 80;
+        const count = Math.min(Math.floor((this.canvas.width * this.canvas.height) / divider), maxCount);
         this.particles = [];
         for (let i = 0; i < count; i++) {
             let hue;
@@ -266,16 +272,8 @@ class ParticleBackground {
 
     animate() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        const gradient = this.ctx.createRadialGradient(
-            this.canvas.width / 2, this.canvas.height / 2, 0,
-            this.canvas.width / 2, this.canvas.height / 2, this.canvas.width * 0.7
-        );
-        gradient.addColorStop(0, 'rgba(30, 20, 60, 0.3)');
-        gradient.addColorStop(0.5, 'rgba(15, 10, 40, 0.2)');
-        gradient.addColorStop(1, 'transparent');
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Render particles
         for (const p of this.particles) {
             p.x += p.speedX;
             p.y += p.speedY;
@@ -289,20 +287,25 @@ class ParticleBackground {
             this.ctx.fill();
         }
 
-        for (let i = 0; i < this.particles.length; i++) {
-            for (let j = i + 1; j < this.particles.length; j++) {
-                const dx = this.particles[i].x - this.particles[j].x;
-                const dy = this.particles[i].y - this.particles[j].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 100) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
-                    this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
-                    this.ctx.strokeStyle = `rgba(100, 100, 200, ${0.05 * (1 - dist / 100)})`;
-                    this.ctx.lineWidth = 0.5;
-                    this.ctx.stroke();
+        // Draw connections (Desktop only, optimized batch stroke)
+        if (!this.isMobile && this.particles.length > 0) {
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'rgba(100, 100, 200, 0.04)';
+            this.ctx.lineWidth = 0.5;
+            for (let i = 0; i < this.particles.length; i++) {
+                const pi = this.particles[i];
+                for (let j = i + 1; j < this.particles.length; j++) {
+                    const pj = this.particles[j];
+                    const dx = pi.x - pj.x;
+                    const dy = pi.y - pj.y;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < 10000) { // 100px limit (100 * 100)
+                        this.ctx.moveTo(pi.x, pi.y);
+                        this.ctx.lineTo(pj.x, pj.y);
+                    }
                 }
             }
+            this.ctx.stroke();
         }
         requestAnimationFrame(() => this.animate());
     }
@@ -884,9 +887,8 @@ class BlockBlastGame {
         const ghostLeft = x - ghostW / 2;
         const ghostTop = (y - fingerOffset) - ghostH / 2;
 
-        this.dragGhost.style.left = `${ghostLeft}px`;
-        this.dragGhost.style.top = `${ghostTop}px`;
-        this.dragGhost.style.transform = 'none'; // no CSS translate, we handle it manually
+        // Use GPU accelerated translate3d instead of modifying left/top (which triggers reflow)
+        this.dragGhost.style.transform = `translate3d(${ghostLeft}px, ${ghostTop}px, 0)`;
     }
 
     // Get the actual rendered cell width, height and gap from the board
