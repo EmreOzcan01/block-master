@@ -1045,21 +1045,25 @@ class BlockBlastGame {
     showPreview(row, col) {
         const valid = this.canPlace(row, col, this.dragShape);
 
+        // Don't show preview if it cannot be placed
+        if (!valid) return;
+
         // Show piece cells preview
         for (const [dr, dc] of this.dragShape.cells) {
             const r = row + dr;
             const c = col + dc;
             if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
                 const cell = this.cells[r][c];
-                cell.classList.add(valid ? 'preview-valid' : 'preview-invalid');
+                cell.classList.add('preview-valid');
+                cell.style.background = this.dragColor + '40'; // 25% opacity
+                cell.style.borderColor = this.dragColor + '66'; // 40% opacity
+                cell.style.boxShadow = `0 0 12px ${this.dragColor}33`; // 20% opacity
                 this.lastPreviewCells.push(cell);
             }
         }
 
         // If valid placement, check which lines would clear and glow them
-        if (valid) {
-            this.showWillClearPreview(row, col);
-        }
+        this.showWillClearPreview(row, col);
     }
 
     // Simulate placement and highlight rows/columns that would be completed
@@ -1115,6 +1119,9 @@ class BlockBlastGame {
     clearPreview() {
         for (const cell of this.lastPreviewCells) {
             cell.classList.remove('preview-valid', 'preview-invalid');
+            cell.style.background = '';
+            cell.style.borderColor = '';
+            cell.style.boxShadow = '';
         }
         this.lastPreviewCells = [];
 

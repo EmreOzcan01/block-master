@@ -960,9 +960,6 @@ button {
 
 /* Hover/preview highlight when dragging over valid position */
 .game-cell.preview-valid {
-    background: rgba(0, 230, 118, 0.25) !important;
-    border-color: rgba(0, 230, 118, 0.4) !important;
-    box-shadow: 0 0 12px rgba(0, 230, 118, 0.2);
     transform: scale(1.05);
 }
 
