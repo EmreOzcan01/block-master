@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="BlockBlast - Blokları yerleştir, satır ve sütunları patlat! Tüm platformlarda çalışan eğlenceli bulmaca oyunu.">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>BlockBlast - Bulmaca Oyunu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated background particles -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Floating block shapes decoration -->
+    <div class="floating-blocks" id="floatingBlocks"></div>
+
+    <!-- ==================== INTRO SCREEN ==================== -->
+    <div class="intro-screen" id="introScreen">
+        <div class="logo-container">
+            <div class="logo-icon" id="logoIcon">
+                <div class="logo-grid">
+                    <div class="logo-cell filled c1"></div>
+                    <div class="logo-cell filled c2"></div>
+                    <div class="logo-cell"></div>
+                    <div class="logo-cell filled c3"></div>
+                    <div class="logo-cell filled c4"></div>
+                    <div class="logo-cell filled c5"></div>
+                    <div class="logo-cell"></div>
+                    <div class="logo-cell filled c6"></div>
+                    <div class="logo-cell filled c7"></div>
+                </div>
+            </div>
+            <h1 class="game-title">
+                <span class="title-block">B</span><span class="title-block">L</span><span class="title-block">O</span><span class="title-block">C</span><span class="title-block">K</span>
+                <br>
+                <span class="title-blast">BLAST</span>
+            </h1>
+            <p class="game-subtitle">Yerleştir · Doldur · Patlat!</p>
+        </div>
+
+        <!-- Mini preview board -->
+        <div class="preview-container" id="previewContainer">
+            <div class="preview-board" id="previewBoard"></div>
+        </div>
+
+        <!-- Play button -->
+        <button class="play-btn" id="playBtn">
+            <span class="play-btn-bg"></span>
+            <span class="play-btn-text">
+                <svg class="play-icon" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 5.14v14.72a1 1 0 001.5.86l11.04-7.36a1 1 0 000-1.72L9.5 4.28a1 1 0 00-1.5.86z" fill="currentColor"/>
+                </svg>
+                OYNA
+            </span>
+            <span class="play-btn-shine"></span>
+        </button>
+
+        <!-- Bottom links -->
+        <div class="bottom-links">
+            <button class="link-btn" id="howToPlayBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                    <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+                </svg>
+                Nasıl Oynanır
+            </button>
+            <button class="link-btn" id="settingsBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                Ayarlar
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== GAME SCREEN ==================== -->
+    <div class="game-screen hidden" id="gameScreen">
+        <!-- Header: Score -->
+        <div class="game-header" id="gameHeader">
+            <button class="game-back-btn" id="gameBackBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="score-box" id="scoreBox">
+                <span class="score-label">SKOR</span>
+                <span class="score-value" id="scoreValue">0</span>
+            </div>
+            <div class="score-box high" id="highScoreBox">
+                <span class="score-label">EN YÜKSEK</span>
+                <span class="score-value" id="highScoreValue">0</span>
+            </div>
+        </div>
+
+        <!-- Game Board 8x8 -->
+        <div class="game-board-wrapper">
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+
+        <!-- 3 Piece Slots -->
+        <div class="piece-tray" id="pieceTray">
+            <div class="piece-slot" id="pieceSlot0"></div>
+            <div class="piece-slot" id="pieceSlot1"></div>
+            <div class="piece-slot" id="pieceSlot2"></div>
+        </div>
+    </div>
+
+    <!-- ==================== GAME OVER OVERLAY ==================== -->
+    <div class="gameover-overlay hidden" id="gameOverOverlay">
+        <div class="gameover-card">
+            <div class="gameover-emoji">💥</div>
+            <h2 class="gameover-title">Oyun Bitti!</h2>
+            <div class="gameover-score">
+                <span class="gameover-score-label">Skor</span>
+                <span class="gameover-score-value" id="gameOverScore">0</span>
+            </div>
+            <div class="gameover-best">
+                <span class="gameover-best-label">En Yüksek</span>
+                <span class="gameover-best-value" id="gameOverBest">0</span>
+            </div>
+            <button class="play-btn gameover-restart" id="restartBtn">
+                <span class="play-btn-bg"></span>
+                <span class="play-btn-text">
+                    <svg class="play-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M1 4v6h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M3.51 15a9 9 0 105.64-11.36L1 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                    TEKRAR OYNA
+                </span>
+                <span class="play-btn-shine"></span>
+            </button>
+            <button class="link-btn gameover-menu" id="menuBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18"/>
+                </svg>
+                Ana Menü
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== HOW TO PLAY MODAL ==================== -->
+    <div class="modal-overlay" id="howToPlayModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalCloseBtn">&times;</button>
+            <h2 class="modal-title">Nasıl Oynanır?</h2>
+            <div class="how-to-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-info">
+                        <h3>Blokları Al</h3>
+                        <p>Her turda 3 farklı blok şekli verilir.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-info">
+                        <h3>Tahtaya Yerleştir</h3>
+                        <p>Blokları sürükleyip boş alanlara yerleştir.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-info">
+                        <h3>Satır & Sütun Patlat</h3>
+                        <p>Tam dolan satır veya sütunlar otomatik patlar ve puan kazanırsın!</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">⚡</div>
+                    <div class="step-info">
+                        <h3>Strateji Yap</h3>
+                        <p>Blokları yerleştiremezsen oyun biter. Akıllıca yerleştir!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SETTINGS MODAL ==================== -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <button class="modal-close" id="settingsCloseBtn">&times;</button>
+            <h2 class="modal-title">Ayarlar</h2>
+            <div class="settings-options">
+                <div class="setting-item">
+                    <span>Ses Efektleri</span>
+                    <label class="switch">
+                        <input type="checkbox" id="soundToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Titreşim</span>
+                    <label class="switch">
+                        <input type="checkbox" id="vibrateToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Skor Sıfırla</span>
+                    <button class="reset-btn" id="resetScoreBtn">Sıfırla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dragging ghost (piece being dragged) -->
+    <div class="drag-ghost hidden" id="dragGhost"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
