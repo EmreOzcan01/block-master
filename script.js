@@ -954,13 +954,22 @@ class BlockBlastGame {
         // Convert ghost center to an anchor (top-left) row/col on the board
         const anchorPos = this.getAnchorFromGhostCenter(ghostCenterX, ghostCenterY);
 
+        let snappedAnchorPos = null;
         if (anchorPos) {
-            // Only update preview if anchor changed (perf optimization)
-            if (anchorPos.row !== this.lastAnchorRow || anchorPos.col !== this.lastAnchorCol) {
+            if (this.canPlace(anchorPos.row, anchorPos.col, this.dragShape)) {
+                snappedAnchorPos = anchorPos;
+            } else {
+                snappedAnchorPos = this.findNearestPlaceable(anchorPos.row, anchorPos.col, this.dragShape);
+            }
+        }
+
+        if (snappedAnchorPos) {
+            // Only update preview if snapped anchor changed (perf optimization)
+            if (snappedAnchorPos.row !== this.lastAnchorRow || snappedAnchorPos.col !== this.lastAnchorCol) {
                 this.clearPreview();
-                this.showPreview(anchorPos.row, anchorPos.col);
-                this.lastAnchorRow = anchorPos.row;
-                this.lastAnchorCol = anchorPos.col;
+                this.showPreview(snappedAnchorPos.row, snappedAnchorPos.col);
+                this.lastAnchorRow = snappedAnchorPos.row;
+                this.lastAnchorCol = snappedAnchorPos.col;
             }
         } else {
             if (this.lastAnchorRow !== -1 || this.lastAnchorCol !== -1) {
@@ -969,6 +978,32 @@ class BlockBlastGame {
                 this.lastAnchorCol = -1;
             }
         }
+    }
+
+    findNearestPlaceable(row, col, shape) {
+        let bestRow = -1;
+        let bestCol = -1;
+        let minDistanceSq = Infinity;
+
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (this.canPlace(r, c, shape)) {
+                    const dr = r - row;
+                    const dc = c - col;
+                    const distSq = dr * dr + dc * dc;
+                    if (distSq < minDistanceSq) {
+                        minDistanceSq = distSq;
+                        bestRow = r;
+                        bestCol = c;
+                    }
+                }
+            }
+        }
+
+        if (bestRow !== -1) {
+            return { row: bestRow, col: bestCol };
+        }
+        return null;
     }
 
     // Convert ghost center position to the anchor (top-left) cell on the board
