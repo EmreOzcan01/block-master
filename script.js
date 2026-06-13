@@ -679,6 +679,8 @@ class BlockBlastGame {
         this.lastWillClearCells = [];
         this.lastAnchorRow = -1;      // cache to avoid redundant preview updates
         this.lastAnchorCol = -1;
+        this.ticking = false;
+        this.lastPointerPos = null;
 
         // Initialize
         this.createBoard();
@@ -848,6 +850,8 @@ class BlockBlastGame {
         this.dragPieceIndex = index;
         this.dragShape = piece.shape;
         this.dragColor = piece.color;
+        this.ticking = false;
+        this.lastPointerPos = null;
 
         // Compute shape bounding box and center
         let maxR = 0, maxC = 0;
@@ -943,7 +947,21 @@ class BlockBlastGame {
         if (!this.dragging) return;
         e.preventDefault();
 
-        const pos = this.getPointerPos(e);
+        this.lastPointerPos = this.getPointerPos(e);
+
+        if (!this.ticking) {
+            this.ticking = true;
+            requestAnimationFrame(() => this.updateDragFrame());
+        }
+    }
+
+    updateDragFrame() {
+        if (!this.dragging || !this.lastPointerPos) {
+            this.ticking = false;
+            return;
+        }
+
+        const pos = this.lastPointerPos;
         this.updateGhostPosition(pos.x, pos.y);
 
         // Determine which board cell the CENTER of the ghost is over
@@ -978,6 +996,8 @@ class BlockBlastGame {
                 this.lastAnchorCol = -1;
             }
         }
+
+        this.ticking = false;
     }
 
     findNearestPlaceable(row, col, shape) {
@@ -1077,6 +1097,8 @@ class BlockBlastGame {
         this.dragColor = '';
         this.lastAnchorRow = -1;
         this.lastAnchorCol = -1;
+        this.ticking = false;
+        this.lastPointerPos = null;
     }
 
     // --- Placement logic ---
