@@ -1116,9 +1116,9 @@ class BlockBlastGame {
             if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
                 const cell = this.cells[r][c];
                 cell.classList.add('preview-valid');
-                cell.style.background = this.dragColor + '40'; // 25% opacity
-                cell.style.borderColor = this.dragColor + '66'; // 40% opacity
-                cell.style.boxShadow = `0 0 12px ${this.dragColor}33`; // 20% opacity
+                cell.style.setProperty('background', this.dragColor + '40', 'important');
+                cell.style.setProperty('border-color', this.dragColor + '66', 'important');
+                cell.style.setProperty('box-shadow', `0 0 12px ${this.dragColor}33`, 'important');
                 this.lastPreviewCells.push(cell);
             }
         }
