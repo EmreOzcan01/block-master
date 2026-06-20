@@ -2,6 +2,16 @@
    BlockBlast - Full Game Logic
    ======================================== */
 
+// Initialize Low Graphics Mode as early as possible
+const isMobileDevice = window.innerWidth < 768;
+const initialLowGraphics = localStorage.getItem('blockblast_low_graphics') === null
+    ? isMobileDevice
+    : localStorage.getItem('blockblast_low_graphics') === 'true';
+
+if (initialLowGraphics) {
+    document.body.classList.add('low-graphics');
+}
+
 // ==========================================
 // CONSTANTS & SHAPE DEFINITIONS
 // ==========================================
@@ -216,7 +226,7 @@ class ParticleBackground {
         this.themeMinHue = null;
         this.themeMaxHue = null;
         this.isMobile = window.innerWidth < 768;
-        this.paused = false;
+        this.paused = document.body.classList.contains('low-graphics');
         this.resize();
         window.addEventListener('resize', () => {
             this.isMobile = window.innerWidth < 768;
@@ -232,6 +242,10 @@ class ParticleBackground {
     }
 
     init() {
+        if (this.paused) {
+            this.particles = [];
+            return;
+        }
         const divider = this.isMobile ? 25000 : 15000;
         const maxCount = this.isMobile ? 30 : 80;
         const count = Math.min(Math.floor((this.canvas.width * this.canvas.height) / divider), maxCount);
@@ -276,8 +290,12 @@ class ParticleBackground {
     }
 
     resume() {
+        if (document.body.classList.contains('low-graphics')) return;
         if (this.paused) {
             this.paused = false;
+            if (this.particles.length === 0) {
+                this.init();
+            }
             this.animate();
         }
     }
@@ -366,6 +384,7 @@ class FloatingBlocksManager {
     }
 
     spawnBlocks() {
+        if (document.body.classList.contains('low-graphics')) return;
         const count = window.innerWidth < 480 ? 6 : 12;
         for (let i = 0; i < count; i++) {
             this.container.appendChild(this.createBlock());
@@ -553,11 +572,13 @@ class ModalManager {
 
         const soundToggle = document.getElementById('soundToggle');
         const vibrateToggle = document.getElementById('vibrateToggle');
+        const graphicsToggle = document.getElementById('graphicsToggle');
         const resetScoreBtn = document.getElementById('resetScoreBtn');
 
         // Initialize checkbox states from localStorage
         soundToggle.checked = localStorage.getItem('blockblast_sound') !== 'false';
         vibrateToggle.checked = localStorage.getItem('blockblast_vibrate') !== 'false';
+        graphicsToggle.checked = initialLowGraphics;
 
         // How To Play listeners
         howToPlayBtn.addEventListener('click', () => {
@@ -602,6 +623,32 @@ class ModalManager {
             localStorage.setItem('blockblast_vibrate', vibrateToggle.checked.toString());
             soundEffects.play('click');
             triggerVibration(15);
+        });
+
+        graphicsToggle.addEventListener('change', () => {
+            localStorage.setItem('blockblast_low_graphics', graphicsToggle.checked.toString());
+            soundEffects.play('click');
+            if (graphicsToggle.checked) {
+                document.body.classList.add('low-graphics');
+                if (window.bgParticleSystem) window.bgParticleSystem.pause();
+                if (window.previewBoardAnim) window.previewBoardAnim.stop();
+                // Clear floating blocks
+                const container = document.getElementById('floatingBlocks');
+                if (container) container.innerHTML = '';
+            } else {
+                document.body.classList.remove('low-graphics');
+                const isIntro = document.getElementById('gameScreen').classList.contains('hidden');
+                if (window.bgParticleSystem && isIntro) window.bgParticleSystem.resume();
+                if (isIntro) {
+                    if (window.previewBoardAnim) window.previewBoardAnim.stop();
+                    window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
+                    // Re-spawn floating blocks
+                    const container = document.getElementById('floatingBlocks');
+                    if (container && container.children.length === 0) {
+                        new FloatingBlocksManager(container);
+                    }
+                }
+            }
         });
 
         resetScoreBtn.addEventListener('click', () => {
@@ -1517,6 +1564,11 @@ class BlockBlastGame {
         if (window.bgParticleSystem) {
             window.bgParticleSystem.pause();
         }
+        // Hide floating blocks during game to save CPU/GPU cycles
+        const fBlocks = document.getElementById('floatingBlocks');
+        if (fBlocks) {
+            fBlocks.classList.add('hidden');
+        }
         setTimeout(() => {
             this.introScreen.classList.add('hidden');
             this.introScreen.classList.remove('fade-out');
@@ -1529,10 +1581,19 @@ class BlockBlastGame {
         this.gameScreen.classList.add('hidden');
         this.gameOverOverlay.classList.add('hidden');
         this.introScreen.classList.remove('hidden');
+        
+        // Show floating blocks again
+        const fBlocks = document.getElementById('floatingBlocks');
+        if (fBlocks) {
+            fBlocks.classList.remove('hidden');
+        }
+        
         if (window.previewBoardAnim) {
             window.previewBoardAnim.stop();
         }
-        window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
+        if (!document.body.classList.contains('low-graphics')) {
+            window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
+        }
         if (window.bgParticleSystem) {
             window.bgParticleSystem.resume();
         }
@@ -1549,7 +1610,9 @@ document.addEventListener('DOMContentLoaded', () => {
     new FloatingBlocksManager(document.getElementById('floatingBlocks'));
 
     // Intro preview board
-    window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
+    if (!document.body.classList.contains('low-graphics')) {
+        window.previewBoardAnim = new PreviewBoardAnimation(document.getElementById('previewBoard'));
+    }
 
     // Modal
     new ModalManager();

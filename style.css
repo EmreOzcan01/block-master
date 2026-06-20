@@ -1675,3 +1675,101 @@ input:checked+.slider:before {
         padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
     }
 }
+
+/* ==========================================
+   LOW GRAPHICS / PERFORMANCE MODE OVERRIDES
+   ========================================== */
+body.low-graphics #bgCanvas,
+body.low-graphics .floating-blocks,
+body.low-graphics .preview-container {
+    display: none !important;
+}
+
+body.low-graphics .game-cell {
+    box-shadow: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+body.low-graphics .game-cell.filled,
+body.low-graphics .piece-cell.filled,
+body.low-graphics .drag-ghost .ghost-cell.filled {
+    box-shadow: none !important;
+}
+
+body.low-graphics .drag-ghost {
+    filter: none !important;
+}
+
+body.low-graphics .logo-icon {
+    animation: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.low-graphics .logo-icon::before {
+    display: none !important;
+}
+
+body.low-graphics .logo-cell.filled {
+    animation: none !important;
+}
+
+body.low-graphics .play-btn-shine {
+    animation: none !important;
+    display: none !important;
+}
+
+body.low-graphics .play-btn::before {
+    animation: none !important;
+}
+
+body.low-graphics .play-btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+body.low-graphics .link-btn:hover {
+    transform: none !important;
+    background: none !important;
+}
+
+body.low-graphics .modal-overlay,
+body.low-graphics .modal-content,
+body.low-graphics .gameover-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.low-graphics .modal-content {
+    box-shadow: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Theme overrides under Low Graphics mode (removing shadows and glows) */
+body.low-graphics.theme-cyberpunk .game-cell:not(.filled) {
+    box-shadow: none !important;
+    border: 1px solid rgba(255, 0, 127, 0.1) !important;
+}
+body.low-graphics.theme-cyberpunk .game-cell.filled {
+    box-shadow: none !important;
+    border: none !important;
+}
+
+body.low-graphics.theme-sunset .game-cell:not(.filled) {
+    box-shadow: none !important;
+    border: 1px dashed rgba(255, 109, 0, 0.15) !important;
+}
+body.low-graphics.theme-sunset .game-cell.filled {
+    box-shadow: none !important;
+    border: none !important;
+}
+
+body.low-graphics.theme-cosmic .game-cell:not(.filled) {
+    box-shadow: none !important;
+    border: 1px dotted rgba(0, 230, 118, 0.15) !important;
+}
+body.low-graphics.theme-cosmic .game-cell.filled {
+    box-shadow: none !important;
+    border: none !important;
+}
